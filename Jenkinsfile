@@ -10,8 +10,7 @@ pipeline {
 
         stage('Checkout Source') {
             steps {
-                git branch: 'main',
-                    url: 'https://github.com/mahafuj-hasan-91/Incident-Reporting-System.git'
+                echo "Source code already checked out by Jenkins"
             }
         }
 
