@@ -1,11 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'maven:3.9.9-eclipse-temurin-21'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
-
+    agent any
 
     environment {
         IMAGE_NAME = "YOUR_DOCKERHUB_USERNAME/incident-reporting-app"
@@ -22,7 +16,14 @@ pipeline {
 
         stage('Maven Build') {
             steps {
-                sh 'mvn clean package -DskipTests'
+                sh '''
+                docker run --rm \
+                  -v "$PWD":/app \
+                  -v "$HOME/.m2":/root/.m2 \
+                  -w /app \
+                  maven:3.9.9-eclipse-temurin-21 \
+                  mvn clean package -DskipTests
+                '''
             }
         }
 
