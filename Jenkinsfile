@@ -11,7 +11,7 @@ pipeline {
         stage('Checkout Source') {
             steps {
                 git branch: 'main',
-                    url: 'https://github.com/YOUR_GITHUB_USERNAME/YOUR_REPO.git'
+                    url: 'https://github.com/mahafuj-hasan-91/Incident-Reporting-System.git'
             }
         }
 
