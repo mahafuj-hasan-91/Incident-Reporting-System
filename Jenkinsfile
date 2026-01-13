@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         // Change these variables to match your actual details
-        DOCKER_IMAGE = 'byteBender0/incident-reporting-system'
+        DOCKER_IMAGE = 'bytebender0/incident-reporting-system'
         REGISTRY_CREDS_ID = 'dockerhub-pwd'
     }
 
@@ -56,7 +56,7 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: "${REGISTRY_CREDS_ID}", variable: 'DOCKER_PASSWORD')]) {
                         // Securely logs in and pushes the image
-                        sh "echo $DOCKER_PASSWORD | docker login -u byteBender0 --password-stdin"
+                        sh "echo $DOCKER_PASSWORD | docker login -u bytebender0 --password-stdin"
                         sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
                     }
                 }
