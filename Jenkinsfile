@@ -2,60 +2,65 @@ pipeline {
     agent any
 
     environment {
-        IMAGE_NAME = "YOUR_DOCKERHUB_USERNAME/incident-reporting-app"
-        IMAGE_TAG  = "1.0.${env.BUILD_NUMBER}"
+        // Change these variables to match your actual details
+        DOCKER_IMAGE = 'byteBender0/incident-reporting-system'
+        REGISTRY_CREDS_ID = 'dockerhub-pwd'
     }
 
     stages {
-
-        stage('Checkout Source') {
+        stage('1. Checkout Code') {
             steps {
-                echo "Source code already checked out by Jenkins"
+                // Fetches code from your GitHub repository
+                checkout([$class: 'GitSCM',
+                    branches: [[name: '*/main']],
+                    extensions: [],
+                    userRemoteConfigs: [[url: 'https://github.com/mahafuj-hasan-91/Incident-Reporting-System.git']]
+                ])
             }
         }
 
-        stage('Maven Build') {
+        stage('2. Maven Build') {
             steps {
-                sh '''
-                docker run --rm \
-                  -v "$PWD":/app \
-                  -v "$HOME/.m2":/root/.m2 \
-                  -w /app \
-                  maven:3.9.9-eclipse-temurin-21 \
-                  mvn clean package -DskipTests
-                '''
+                // Compiles code and packages it, skipping tests to save time here
+                // We use chmod to ensure the wrapper script is executable
+                sh 'chmod +x mvnw'
+                sh './mvnw clean package -DskipTests'
             }
         }
 
-        stage('Unit Tests') {
+        stage('3. Unit Testing') {
             steps {
-                sh 'mvn test'
+                // Runs the unit tests specifically
+                // If tests fail, the pipeline stops here preventing bad code from being dockerized
+                sh './mvnw test'
             }
-        }
-
-        stage('Build Docker Image') {
-            steps {
-                sh "docker build -t $IMAGE_NAME:$IMAGE_TAG ."
-            }
-        }
-
-        stage('Push to DockerHub') {
-            steps {
-                withDockerRegistry([credentialsId: 'dockerhub', url: '']) {
-                    sh "docker push $IMAGE_NAME:$IMAGE_TAG"
-                    sh "docker tag $IMAGE_NAME:$IMAGE_TAG $IMAGE_NAME:latest"
-                    sh "docker push $IMAGE_NAME:latest"
+            post {
+                always {
+                    // Optional: Captures test results for Jenkins UI visualization
+                    junit '**/target/surefire-reports/*.xml'
                 }
             }
         }
-    }
 
-    post {
-        success {
-            echo "incident-reporting-app build and Docker push completed successfully"
+        stage('4. Docker Build') {
+            steps {
+                script {
+                    // Builds the image using the current build number as a tag
+                    sh "docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} ."
+                }
+            }
         }
-        failure {
-            echo "Pipeline failed — fix errors before retrying"
+
+        stage('5. Push to Registry') {
+            steps {
+                script {
+                    withCredentials([string(credentialsId: "${REGISTRY_CREDS_ID}", variable: 'DOCKER_PASSWORD')]) {
+                        // Securely logs in and pushes the image
+                        sh "echo $DOCKER_PASSWORD | docker login -u byteBender0 --password-stdin"
+                        sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
+                    }
+                }
+            }
         }
     }
 }
