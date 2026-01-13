@@ -56,7 +56,7 @@ pipeline {
                 script {
                     withCredentials([string(credentialsId: "${REGISTRY_CREDS_ID}", variable: 'DOCKER_PASSWORD')]) {
                         // Securely logs in and pushes the image
-                        sh "echo $DOCKER_PASSWORD | docker login -u bytebender0 --password-stdin"
+                        sh 'echo $DOCKER_PASSWORD | docker login -u bytebender0 --password-stdin'
                         sh "docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}"
                     }
                 }
